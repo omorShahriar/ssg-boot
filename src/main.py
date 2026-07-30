@@ -55,6 +55,20 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, "w") as output_file:
         output_file.write(page)
 
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    for name in os.listdir(dir_path_content):
+        content_path = os.path.join(dir_path_content, name)
+        destination_path = os.path.join(dest_dir_path, name)
+
+        if os.path.isfile(content_path):
+            if name.endswith(".md"):
+                destination_path = os.path.splitext(destination_path)[0] + ".html"
+                generate_page(content_path, template_path, destination_path)
+        else:
+            os.makedirs(destination_path, exist_ok=True)
+            generate_pages_recursive(content_path, template_path, destination_path)
+
 def text_node_to_html_node(text_node):
     # It should handle each type of the TextType enum. If it gets a TextNode that is none of those types, it should raise an exception. Otherwise, it should return a new LeafNode object.
     if text_node.text_type == TextType.TEXT:
@@ -75,7 +89,7 @@ def text_node_to_html_node(text_node):
 
 def main():
     copy_static_to_public()
-    generate_page("content/index.md", "template.html", "public/index.html")
+    generate_pages_recursive("content", "template.html", "public")
 
 if __name__ == "__main__":
     main()

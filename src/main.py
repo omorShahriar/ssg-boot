@@ -27,6 +27,34 @@ def copy_static_to_public():
     os.mkdir(destination)
     copy_files(source, destination)
 
+
+def extract_title(markdown):
+    for line in markdown.splitlines():
+        if line.startswith("# "):
+            return line[1:].strip()
+    raise Exception("No h1 header found")
+
+
+def generate_page(from_path, template_path, dest_path):
+    from markdown_to_html_node import markdown_to_html_node
+
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+
+    with open(from_path) as markdown_file:
+        markdown = markdown_file.read()
+    with open(template_path) as template_file:
+        template = template_file.read()
+
+    content = markdown_to_html_node(markdown).to_html()
+    title = extract_title(markdown)
+    page = template.replace("{{ Title }}", title).replace("{{ Content }}", content)
+
+    destination_directory = os.path.dirname(dest_path)
+    if destination_directory:
+        os.makedirs(destination_directory, exist_ok=True)
+    with open(dest_path, "w") as output_file:
+        output_file.write(page)
+
 def text_node_to_html_node(text_node):
     # It should handle each type of the TextType enum. If it gets a TextNode that is none of those types, it should raise an exception. Otherwise, it should return a new LeafNode object.
     if text_node.text_type == TextType.TEXT:
@@ -47,6 +75,7 @@ def text_node_to_html_node(text_node):
 
 def main():
     copy_static_to_public()
+    generate_page("content/index.md", "template.html", "public/index.html")
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,10 @@
+import re
+
 from textnode import TextType,TextNode
+
+
+IMAGE_PATTERN = re.compile(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)")
+
 
 def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
     new_nodes = []
@@ -6,19 +12,16 @@ def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
         if node.text_type == TextType.IMAGE:
             new_nodes.append(node)
         elif node.text_type == TextType.TEXT:
-            parts = node.text.split('![')
-            for i, part in enumerate(parts):
-                if i % 2 == 0:
-                    new_nodes.append(TextNode(part, TextType.TEXT))
-                else:
-                    image_parts = part.split(']')
-                    if len(image_parts) > 1:
-                        image_text = image_parts[0]
-                        image_url = image_parts[1].strip('()')
-                        new_nodes.append(TextNode(image_text, TextType.IMAGE))
-                        new_nodes.append(TextNode(image_url, TextType.TEXT))
-                    else:
-                        new_nodes.append(TextNode(part, TextType.TEXT))
+            cursor = 0
+            for match in IMAGE_PATTERN.finditer(node.text):
+                if match.start() > cursor:
+                    new_nodes.append(TextNode(node.text[cursor:match.start()], TextType.TEXT))
+                new_nodes.append(TextNode(match.group(1), TextType.IMAGE, match.group(2)))
+                cursor = match.end()
+            if cursor < len(node.text):
+                new_nodes.append(TextNode(node.text[cursor:], TextType.TEXT))
+            elif cursor == 0:
+                new_nodes.append(node)
         else:
             new_nodes.append(node)
 

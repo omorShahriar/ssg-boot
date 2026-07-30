@@ -1,5 +1,31 @@
+import os
+import shutil
+
 from htmlnode import LeafNode
 from textnode import TextNode, TextType
+
+
+def copy_files(source, destination):
+    for name in os.listdir(source):
+        source_path = os.path.join(source, name)
+        destination_path = os.path.join(destination, name)
+
+        if os.path.isfile(source_path):
+            shutil.copy(source_path, destination_path)
+            print(f"Copied {source_path} to {destination_path}")
+        else:
+            os.mkdir(destination_path)
+            copy_files(source_path, destination_path)
+
+
+def copy_static_to_public():
+    source = "static"
+    destination = "public"
+
+    if os.path.exists(destination):
+        shutil.rmtree(destination)
+    os.mkdir(destination)
+    copy_files(source, destination)
 
 def text_node_to_html_node(text_node):
     # It should handle each type of the TextType enum. If it gets a TextNode that is none of those types, it should raise an exception. Otherwise, it should return a new LeafNode object.
@@ -20,8 +46,7 @@ def text_node_to_html_node(text_node):
 
 
 def main():
-    new = TextNode('This is some anchor text', TextType.LINK, 'https://www.boot.dev')
-    print(new)
+    copy_static_to_public()
 
 if __name__ == "__main__":
     main()

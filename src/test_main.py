@@ -38,3 +38,21 @@ class TestExtractTitle(unittest.TestCase):
                     output_file.read(),
                     "<title>Hello</title><div><h1>Hello</h1><p>This is <b>bold</b>.</p></div>",
                 )
+
+    def test_generate_page_rewrites_root_urls_for_basepath(self):
+        with tempfile.TemporaryDirectory() as directory:
+            markdown_path = os.path.join(directory, "index.md")
+            template_path = os.path.join(directory, "template.html")
+            destination_path = os.path.join(directory, "index.html")
+
+            with open(markdown_path, "w") as markdown_file:
+                markdown_file.write("# Hello\n\n[Home](/)\n\n![Image](/images/image.png)")
+            with open(template_path, "w") as template_file:
+                template_file.write("{{ Content }}")
+
+            generate_page(markdown_path, template_path, destination_path, "/repo/")
+
+            with open(destination_path) as output_file:
+                html = output_file.read()
+            self.assertIn('href="/repo/"', html)
+            self.assertIn('src="/repo/images/image.png"', html)

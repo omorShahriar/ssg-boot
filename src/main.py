@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from htmlnode import LeafNode
 from textnode import TextNode, TextType
@@ -18,9 +19,9 @@ def copy_files(source, destination):
             copy_files(source_path, destination_path)
 
 
-def copy_static_to_public():
+def copy_static_to_docs():
     source = "static"
-    destination = "public"
+    destination = "docs"
 
     if os.path.exists(destination):
         shutil.rmtree(destination)
@@ -35,7 +36,7 @@ def extract_title(markdown):
     raise Exception("No h1 header found")
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath="/"):
     from markdown_to_html_node import markdown_to_html_node
 
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
@@ -48,6 +49,8 @@ def generate_page(from_path, template_path, dest_path):
     content = markdown_to_html_node(markdown).to_html()
     title = extract_title(markdown)
     page = template.replace("{{ Title }}", title).replace("{{ Content }}", content)
+    page = page.replace('href="/', f'href="{basepath}')
+    page = page.replace('src="/', f'src="{basepath}')
 
     destination_directory = os.path.dirname(dest_path)
     if destination_directory:
@@ -56,7 +59,7 @@ def generate_page(from_path, template_path, dest_path):
         output_file.write(page)
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath="/"):
     for name in os.listdir(dir_path_content):
         content_path = os.path.join(dir_path_content, name)
         destination_path = os.path.join(dest_dir_path, name)
@@ -64,10 +67,10 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
         if os.path.isfile(content_path):
             if name.endswith(".md"):
                 destination_path = os.path.splitext(destination_path)[0] + ".html"
-                generate_page(content_path, template_path, destination_path)
+                generate_page(content_path, template_path, destination_path, basepath)
         else:
             os.makedirs(destination_path, exist_ok=True)
-            generate_pages_recursive(content_path, template_path, destination_path)
+            generate_pages_recursive(content_path, template_path, destination_path, basepath)
 
 def text_node_to_html_node(text_node):
     # It should handle each type of the TextType enum. If it gets a TextNode that is none of those types, it should raise an exception. Otherwise, it should return a new LeafNode object.
@@ -88,8 +91,9 @@ def text_node_to_html_node(text_node):
 
 
 def main():
-    copy_static_to_public()
-    generate_pages_recursive("content", "template.html", "public")
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
+    copy_static_to_docs()
+    generate_pages_recursive("content", "template.html", "docs", basepath)
 
 if __name__ == "__main__":
     main()

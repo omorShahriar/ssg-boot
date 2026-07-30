@@ -1,0 +1,25 @@
+from htmlnode import LeafNode
+from textnode import TextNode, TextType
+
+def text_node_to_html_node(text_node):
+    # It should handle each type of the TextType enum. If it gets a TextNode that is none of those types, it should raise an exception. Otherwise, it should return a new LeafNode object.
+    if text_node.text_type == TextType.TEXT:
+        return LeafNode(None, text_node.text)
+    elif text_node.text_type == TextType.BOLD:
+        return LeafNode("b", text_node.text)
+    elif text_node.text_type == TextType.ITALIC:
+        return LeafNode("i", text_node.text)
+    elif text_node.text_type == TextType.LINK:
+        return LeafNode("a", text_node.text, props={"href": text_node.url})
+    elif text_node.text_type == TextType.IMAGE:
+        return LeafNode("img", None, props={"src": text_node.url, "alt": text_node.text})
+    else:
+        raise ValueError(f"Unsupported TextType: {text_node.text_type}")
+
+
+def main():
+    new = TextNode('This is some anchor text', TextType.LINK, 'https://www.boot.dev')
+    print(new)
+
+if __name__ == "__main__":
+    main()
